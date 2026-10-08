@@ -4,13 +4,13 @@ Run commands from this `tests` directory in Windows PowerShell. Existing measure
 
 ## Native C comparison
 
-Build `../c檔/CAHw_IDA.c` and `../c檔/CAHw_IDA_improve.c` in Release/x64. Pass the actual executable paths; executables are not included in the submission:
+Build `../c_file/CAHw_IDA.c` and `../c_file/CAHw_IDA_improve.c` in Release/x64. Pass the actual executable paths; executables are not included in the submission:
 
 ```powershell
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\run_c_compare_v2.ps1 -OriginalExe "C:\path\to\original.exe" -OptimizedExe "C:\path\to\optimized.exe"
 ```
 
-If no executable paths are given, the script expects `CAHw_IDA.exe` and `CAHw_IDA_improve.exe` inside `../c檔`. Each of three inputs is tested three times per version. Results go to `../results/c_compare/`.
+If no executable paths are given, the script expects `CAHw_IDA.exe` and `CAHw_IDA_improve.exe` inside `../c_file`. Each of three inputs is tested three times per version. Results go to `../results/c_compare/`.
 
 ## Target model checks
 
