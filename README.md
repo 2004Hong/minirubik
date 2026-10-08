@@ -1,226 +1,158 @@
-# minirubik
+# minirubik — Computer Architecture Homework 1
 
-An optimal C99 solver for the 2×2×2 Rubik’s Cube. It builds a breadth-first
-table for all 3,674,160 states and solves every valid position in at most 11
-half-turn-metric moves.
+This repository is a fork of [sysprog21/minirubik](https://github.com/sysprog21/minirubik). The homework replaces the original full-state BFS solver with IDA*, optimizes the C implementation, and implements the solver in handwritten RV32I assembly with an LED Matrix demonstration in Ripes.
 
-## Why a cube is a graph
+The search uses the half-turn metric (HTM): each of `R R2 R' B B2 B' D D2 D'` counts as one move. The heuristic is `max(permutation distance, orientation distance)`.
 
-Ernő Rubik created the original cube in 1974 to demonstrate how parts can move
-independently without breaking the whole. A 3×3 cube has 20 moving pieces and
-about 4.3 × 10¹⁹ reachable arrangements. The smaller 2×2 cube keeps the eight
-corners and removes the edges and fixed centers. [Philo Li’s formula-free
-introduction](https://philoli.com/zh/blog/solve-rubiks-cube-without-formulas/)
-offers the key intuition: every turn is reversible, turns can be composed, and
-their order matters—`R U` is generally not `U R`.
+- [HackMD report](https://hackmd.io/Ip8LuF4YS6KXOfkMWEEhLQ)
+- [Test instructions](tests/README.md)
+- [Measurement records](results/README.md)
+- [GCC reference instructions](gcc_reference/README.md)
 
-Human solvers use those facts to move a few pieces while restoring the rest;
-the commutator `A B A⁻¹ B⁻¹` is the standard example. This program uses the
-same group structure differently: it treats every valid arrangement as a node,
-every face turn as an edge, and searches the entire graph once. It does not use
-the article’s 3×3 Roux stages or a library of memorized algorithms.
+## Repository Layout
 
-The solver gives the eight corner positions the numbers `0–7`. The 2.5D
-walkthrough below shows where those numbers are on the physical cube.
-
-## How it works
-
-1. Fix one corner to remove whole-cube rotations.
-2. Rank the remaining corner permutation and six independent orientations into
-   a dense integer.
-3. Breadth-first search outward from solved using `R`, `B`, and `D`, including
-   inverse and half turns.
-4. Store one move toward solved for every state; following those moves gives an
-   optimal solution of at most 11 moves.
-
-## Build and run
-
-```sh
-make
-make check
-make prove   # optional: Frama-C WP proof, needs frama-c and alt-ergo
-./solver 21345671111111
+```text
+minirubik/
+├── README.md
+├── solver.c                     # Original upstream BFS solver
+├── mini.c                       # Original upstream program
+├── c_file/
+│   ├── CAHw_IDA.c               # Initial IDA* implementation
+│   └── CAHw_IDA_improve.c       # Optimized IDA* implementation
+├── rv32i/
+│   ├── history/
+│   │   ├── baseline.s          # Initial RV32I implementation
+│   │   ├── opt1.s              # First reported optimization
+│   │   └── opt2.s              # Final reported optimization
+│   └── final/
+│       ├── solver.s            # Shared search and LED source
+│       ├── build.ps1           # Generates CLI or LED assembly
+│       ├── cli.s               # Renderer disabled; used for measurements
+│       └── led.s               # Renderer enabled; used for GUI demonstration
+├── verify/
+│   ├── CAHW_IDA_improve_verify.c
+│   └── verify_release_results.txt
+├── tests/                      # Test scripts, input lists, and input generator
+├── results/
+│   ├── c_compare/              # Native C timing and search-node comparison
+│   ├── history/                # Baseline and opt1 instruction measurements
+│   ├── models/                 # Final opt2 model measurements and section sizes
+│   ├── depth11/                # All 2,644 distance-11 test results
+│   └── ripes_baseline/         # Simulation throughput and host-memory records
+└── gcc_reference/              # GCC target source, startup, linker script,
+                                # build script, and measurement records
 ```
 
-`make` builds two binaries. `solver` is the documented one, with contracts, a
-`--self-test` mode, and diagnostics on stderr. `mini` is a golfed variant that
-solves the same input and prints the same line, kept as a readability contrast;
-it has no `--self-test` and prints nothing on failure, and it trades roughly
-eight times the runtime and three times the memory for its brevity.
+## Build and Run
 
-The 14-digit argument describes the scramble and the printed line is the
-solution. Both formats are explained below.
+The native C programs were measured using Visual Studio 2026 Insiders 18.10.3 with the **Release/x64** configuration. Target measurements use **Ripes v2.2.6-106-g5b8a616**, with `RV32_ISS` and `RV32_5S`. The GCC reference uses **xPack RISC-V GCC 15.2.0** with `-O2 -march=rv32i -mabi=ilp32`.
 
-### Reading the 14-digit input
+### Native C
 
-The program receives one 14-digit code with no spaces. For explanation, split
-it into two groups:
+Build `c_file/CAHw_IDA.c` and `c_file/CAHw_IDA_improve.c` as separate native C programs in Release/x64. Executables are not included. From the repository root, run the optimized executable using its actual build location:
 
-```diagram
-2134567 1111111
-└── P ─┘ └── O ─┘
-  cubies   twists
+```powershell
+& "C:\path\to\CAHw_IDA_improve.exe" 21345671111111 11
 ```
 
-Imagine seven numbered seats and seven students. A position is a seat fixed in
-space; a cubie is the physical corner that can move to another seat. In the
-solved cube, cubie 1 sits in position 1, cubie 2 in position 2, and so on.
-The real cube has no printed numbers; `0–7` are labels used only by this solver.
+The first argument contains seven permutation digits followed by seven orientation digits. The optional second argument is the maximum search depth, from 0 to 11.
 
-#### Step 1: Hold the cube in one direction
+To compare the two C versions, run from the repository root:
 
-Keep `FRONT` facing you and `UP` pointing upward. Position `0` is the corner
-nearest the upper-left of the front face. It is an anchor for describing the
-other corners; the physical cubie is not glued in place.
-
-```diagram
-                              BACK
-                    ·───────────────·
-                   ╱               ╱│
-                  ╱        UP     ╱ │
-                 ╱               ╱  │
-              [0]───────────────·   │
-               │                │   │
-               │     FRONT      │ R │
-               │                │   ·
-               │                │  ╱
-               │                │ ╱
-               │                │╱
-               ·────────────────·
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\run_c_compare_v2.ps1 -OriginalExe "C:\path\to\CAHw_IDA.exe" -OptimizedExe "C:\path\to\CAHw_IDA_improve.exe"
 ```
 
-`R` marks the narrow `RIGHT` face.
+This tests three inputs, with three repetitions per version. Timing covers `solve_ida()`; table construction and final replay are excluded.
 
-#### Step 2: Separate the front and back layers
+### RV32I CLI and LED
 
-A 2×2×2 cube has only corner cubies. Looking from the fixed direction, four
-corner positions touch the front face and four touch the back face. Each
-bracketed number below names one whole corner, not one colored sticker:
+Run these commands from the repository root:
 
-```diagram
- FRONT LAYER                          BACK LAYER
+```powershell
+# Generate cli.s for testing and instruction-count measurements.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\rv32i\final\build.ps1 -Version final -Render 0 -InputState 21345671111111
 
- upper-left   upper-right             upper-left   upper-right
-     [0]────────[1]                       [7]────────[4]
-      │          │                         │          │
-      │          │       front ↔ back      │          │
-     [3]────────[2]                       [6]────────[5]
- down-left    down-right               down-left    down-right
+# Generate led.s for the GUI demonstration.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\rv32i\final\build.ps1 -Version final -Render 1 -InputState 21345671111111
 ```
 
-The front layer runs clockwise from its upper-left corner as `0, 1, 2, 3`.
-The back layer is drawn as if seen through the cube from the front: `7` is
-upper-left, followed clockwise by `4, 5, 6`.
+Both generated versions use the same solver and lookup tables. For the LED demonstration, create **LED Matrix 1**, set **Width 35** and **Height 25**, load `rv32i/final/led.s` in Ripes, and run. The display shows the input state and replays the computed solution. Successful physical-state replay prints `LED replay: 1`.
 
-#### Step 3: Join the two layers into positions 0–7
+Instruction measurements use the CLI version with the renderer disabled.
 
-Slide the back square up and to the right, the same direction the cube recedes
-in Step 1, to get the complete 2.5D position map. The back edges are drawn
-through the front face rather than hidden behind it:
+### GCC Reference
 
-```diagram
-                           BACK
-                      [7]────────[4]
-                     ╱ │        ╱ │
-                  [0]──│─────[1]  │
-                   │   │      │   │
-                   │  [6]─────│──[5]
-                   │ ╱        │ ╱
-                  [3]────────[2]
-                      FRONT
+The GCC comparison uses `gcc_reference/solver_gcc_rv32i.c`, an adaptation of the optimized C solver with embedded tables and Ripes ecalls. It is built with `gcc_start.s` and `gcc_link.ld`.
+
+From `gcc_reference/`, run:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\build.ps1 -ToolchainBin "C:\path\to\riscv-gcc\bin"
 ```
 
-The seven characters of `P` describe positions `1, 2, 3, 4, 5, 6, 7` in that
-order; the anchor at position `0` is left out.
+See [gcc_reference/README.md](gcc_reference/README.md) for the complete build and Ripes measurement commands.
 
-#### Step 4: Put the cubies into those positions
+## Verification and Test Results
 
-Compare the position map on the left with the filled cube on the right. Read
-`P = 2134567` from left to right to fill the positions. The arrows below the
-figure identify the two positions that change.
+### Host Verification: H1–H3
 
-```diagram
- POSITION MAP                             AFTER P = 2134567
- (fixed seats)                            (cubies now in seats)
+Build `verify/CAHW_IDA_improve_verify.c` in Release/x64 and run the resulting executable with `--self-test`. The program performs the full host verification before its additional self-tests:
 
-     [7]────────[4]                           [7]────────[4]
-    ╱ │        ╱ │                           ╱ │        ╱ │
- [0]──│─────[1]  │                        [0]──│─────[2]  │
-  │   │      │   │                         │   │      │   │
-  │  [6]─────│──[5]                        │  [6]─────│──[5]
-  │ ╱        │ ╱                           │ ╱        │ ╱
- [3]────────[2]                           [3]────────[1]
-     FRONT                                    FRONT
-
- position:     1 2 3 4 5 6 7
- P says:       2 1 3 4 5 6 7
-               │ │ └───────── cubies 3–7 stay in their matching seats
-               │ └─────────── put cubie 1 in position 2: [2] becomes [1]
-               └───────────── put cubie 2 in position 1: [1] becomes [2]
+```powershell
+& "C:\path\to\CAHW_IDA_improve_verify.exe" --self-test
 ```
 
-So the first two digits, `21`, exchange the two corners on the front-right
-edge. The remaining digits, `34567`, leave the other five movable corners
-where they were. `P` must contain every digit from `1` through `7` exactly
-once; otherwise a cubie would be missing or duplicated.
+- **H1:** The heuristic does not exceed the true BFS distance for any of the 3,674,160 states.
+- **H2:** Distance and transition tables pass their completeness and consistency checks.
+- **H3:** All 3,674,160 states return solutions of the BFS-optimal length, and every solution solves the cube when replayed.
 
-The seven seats named by `P` are:
+[Verification source](verify/CAHW_IDA_improve_verify.c) · [Complete verification output](verify/verify_release_results.txt)
 
-| Position | Corner of the cube |
-| :---: | :--- |
-| 1 | front, upper, right |
-| 2 | front, down, right |
-| 3 | front, down, left |
-| 4 | back, upper, right |
-| 5 | back, down, right |
-| 6 | back, down, left |
-| 7 | back, upper, left |
+### Target Verification: T5–T7
 
-The second group, `O = 1111111`, describes the twist of the cubie in each of
-those same seven positions:
+From the repository root, run:
 
-| Digit | Meaning |
-| :---: | :--- |
-| 1 | not twisted |
-| 2 | twisted by +120° |
-| 3 | twisted by −120° |
-
-Here every orientation digit is `1`, so the two corners change places without
-being twisted. For a valid cube, convert orientation digits to `0`, `1`, and
-`2`; their sum must be divisible by three. The solved code is
-`12345671111111`. `make check` uses the exchanged-corner example above.
-
-## Reading the solution
-
-```sh
-$ ./solver 21345671111111
-B' R' D2 R' B R B' R D2 B R'
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\run_models.ps1
 ```
 
-Each token is one face turn. Apply them left to right; after the last one the
-cube is solved.
+The script tests the solved state, a one-move input, and the specified eleven-move input on `RV32_ISS` and `RV32_5S`. All six archived runs pass the expected solution-length and replay checks.
 
-| Token | Meaning |
-| :---: | :--- |
-| `R` | turn the `RIGHT` face 90° clockwise |
-| `B` | turn the `BACK` face 90° clockwise |
-| `D` | turn the `DOWN` face 90° clockwise |
+[Model test results](results/models/opt2_result/results.csv) · [Model test script](tests/run_models.ps1)
 
-Clockwise means clockwise as seen by someone looking directly at that face from
-outside the cube, so you have to walk around to the back to read `B` and look up
-from underneath to read `D`. Two suffixes modify a turn:
+For all states at distance 11:
 
-| Suffix | Meaning |
-| :---: | :--- |
-| none | 90° clockwise |
-| `'` | 90° counterclockwise, the inverse |
-| `2` | 180°, direction does not matter |
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\tests\run_depth11_tests.ps1 -Count 2644
+```
 
-`R`, `B`, and `D` are the only faces that appear, because turning `UP`, `FRONT`,
-or `LEFT` would move the anchor at position `0`. A turn counts as one move
-whichever suffix it carries, which is the half-turn metric; under that metric no
-position needs more than 11 moves. Solving an already-solved cube prints an
-empty line.
+Without `-Count 2644`, the script defaults to a five-case pilot. The archived full sweep passes **2,644/2,644** cases. The maximum retired instruction count is **49,850,258**, for input `54721631111111`, below the 50,000,000-instruction limit.
 
-See [`report.md`](report.md) for the model, algorithm, diagrams, and Frama-C
-validation notes.
+[Complete distance-11 records](results/depth11/depth11_opt4_20261007/) · [Full-sweep CSV](results/depth11/depth11_opt4_20261007/results.csv)
+
+The test scripts default to `C:\Ripes\Ripes.exe`; use `-RipesExe` to specify another installation. See [tests/README.md](tests/README.md) for additional options and the Ripes throughput and memory measurements.
+
+## Version Comparison
+
+These instruction measurements use input `21345671111111` on `RV32_ISS`, with LED rendering disabled.
+
+| Version | Main changes | Retired instructions |
+| --- | --- | ---: |
+| baseline | Initial RV32I implementation of the optimized C design | 31,858,748 |
+| opt1 | Inline heuristic, reuse the move cursor, and retain distance-table base addresses in registers | 27,691,761 |
+| opt2 | Check nodes only on entry, decode moves with small tables, skip same-face groups, and prune early on permutation distance | 18,232,235 |
+
+The report's **opt1 was formerly named opt3**, and **opt2 was formerly named opt4**. Original result filenames, manifests, and tool output retain the names and paths used at measurement time.
+
+For the same input, the GCC -O2 reference retires **27,458,618** instructions. The linked `.text` sizes are **1,320 bytes** for GCC and **1,796 bytes** for opt2. The handwritten assembly uses approximately **33.6% fewer instructions**, with **476 bytes more code**, for this input.
+
+The native C comparison reports **14 ms → 2 ms** for the eleven-move input, with identical counts of **38,998 expanded nodes** and **233,961 generated child nodes**. These times are medians of three runs.
+
+- [Native C comparison summary](results/c_compare/summary.csv)
+- [Baseline and opt1 measurements](results/history/)
+- [Final opt2 measurements](results/models/opt2_result/)
+- [Final opt2 section sizes](results/models/opt2_size.txt)
+- [GCC measurements](gcc_reference/results/)
+
+The HackMD report provides the algorithm explanations, optimization discussion, LED screenshots, and analysis. This repository provides the corresponding source code, test tools, and measurement evidence.
