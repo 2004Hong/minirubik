@@ -4,7 +4,7 @@ This repository is a fork of [sysprog21/minirubik](https://github.com/sysprog21/
 
 The search uses the half-turn metric (HTM): each of `R R2 R' B B2 B' D D2 D'` counts as one move. The heuristic is `max(permutation distance, orientation distance)`.
 
-- [HackMD report](https://hackmd.io/Ip8LuF4YS6KXOfkMWEEhLQ)
+- [HackMD report (English)](https://hackmd.io/@YYHH/CAhw1)
 - [Test instructions](tests/README.md)
 - [Measurement records](results/README.md)
 - [GCC reference instructions](gcc_reference/README.md)
