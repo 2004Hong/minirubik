@@ -7,8 +7,8 @@
 )
 $ErrorActionPreference = 'Stop'
 if (-not $BaseFolder) { $BaseFolder = Split-Path -Parent $PSScriptRoot }
-if (-not $OriginalExe) { $OriginalExe=Join-Path $BaseFolder 'c檔/CAHw_IDA.exe' }
-if (-not $OptimizedExe) { $OptimizedExe=Join-Path $BaseFolder 'c檔/CAHw_IDA_improve.exe' }
+if (-not $OriginalExe) { $OriginalExe=Join-Path $BaseFolder 'c_file/CAHw_IDA.exe' }
+if (-not $OptimizedExe) { $OptimizedExe=Join-Path $BaseFolder 'c_file/CAHw_IDA_improve.exe' }
 $versions = @(
     @{Name='Original'; Exe=$OriginalExe},
     @{Name='Optimized'; Exe=$OptimizedExe}
