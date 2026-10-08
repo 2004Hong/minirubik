@@ -1,0 +1,15 @@
+Version=Optimized
+Input=25314672313211
+Run=2
+STDOUT:
+R'
+
+STDERR:
+permutation BFS: visited=5040 maximum=7 solved=0
+orientation BFS: visited=729 maximum=6 solved=0
+root lower bound=1
+limit=1 expanded=1 generated=3 found
+total expanded=1 generated=3 cpu_seconds=0.000000
+solution_length=1
+
+ExitCode=0

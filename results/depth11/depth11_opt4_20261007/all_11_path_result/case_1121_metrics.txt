@@ -1,0 +1,6 @@
+===== cycles
+13349803
+===== instructions retired
+13349803
+===== wall-clock model execution time (ms)
+587

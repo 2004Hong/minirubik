@@ -1,0 +1,9 @@
+{
+    "solver_sha256":  "44E05ED323DBBB7D37F390AE8007D7D6119E08A584F811B5A1820C1F2196A06B",
+    "solver":  "C:\\Users\\洪毓衡\\OneDrive - 長庚大學\\桌面\\CA\\solver_rv32i\\solver_rv32i_opt4.s",
+    "models":  [
+                   "RV32_ISS",
+                   "RV32_5S"
+               ],
+    "ripes_sha256":  "BD2DDEA8CD6FCF6902CDA7366FE99AB6DD0C7FDBBC7EFCFDB89EDE20ACC67F0F"
+}

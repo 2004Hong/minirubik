@@ -1,0 +1,10 @@
+﻿solver_gcc_rv32i.elf  :
+section              size        addr
+.text                1320           0
+.rodata             40460   268435456
+.data                  15   268475916
+.bss                 4232   268475936
+.riscv.attributes      28           0
+Total               46055
+
+

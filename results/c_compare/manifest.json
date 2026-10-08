@@ -1,0 +1,21 @@
+{
+    "date":  "2026-10-07T15:51:35.6759407+08:00",
+    "computer":  "EDWARDHONG",
+    "processor":  "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "os":  "Microsoft Windows NT 10.0.26200.0",
+    "repeats":  3,
+    "configuration":  "Release/x64 (user-built)",
+    "timing":  "Program-reported clock() interval around solve_ida; includes verbose per-bound statistics; excludes table construction and final replay.",
+    "binaries":  [
+                     {
+                         "path":  "C:\\Users\\2853a\\OneDrive\\桌面\\CA\\CAHW1_RE\\x64\\Release\\CAHW1_RE.exe",
+                         "sha256":  "E080743B084F2F867406085606A3DDF49ECCD6F593BD7A206ED8A370DE9917D5",
+                         "version":  "Original"
+                     },
+                     {
+                         "path":  "C:\\Users\\2853a\\OneDrive\\桌面\\CA\\CAHW_cchange\\x64\\Release\\CAHW_cchange.exe",
+                         "sha256":  "65F57E62E095EE731E5A736C2A9C738CB6B2599AC98DF3C8A66AB414629FCAC8",
+                         "version":  "Optimized"
+                     }
+                 ]
+}

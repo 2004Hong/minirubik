@@ -1,0 +1,10 @@
+﻿Started: 2026-10-05T21:10:20.5516155+08:00
+Executable: C:\Ripes\Ripes.exe
+Processor: RV32_ISS
+Metric: PrivateMemorySize64, bytes
+Sampling: approximately every 10 ms, including process startup
+Peak: highest observed sample, not an exact lifetime peak
+Fresh process per run; three runs per footprint; 1048576 stores per run
+ripes_memory_control_equal.s SHA256: 90ABEF0ABCCAFF0D544AC60E6C01568799FD4E9AE59D11461521094F41B9BDA1
+ripes_memory_1MiB_equal.s SHA256: FF0C5B0E445937AE8235E9EF97480081841AD934EA3812C8197AA0D611F24928
+ripes_memory_4MiB_equal.s SHA256: 728E30A212B16EE9F413B07ECE85C580A1A7736F00439106C78FF1414D2E83FD

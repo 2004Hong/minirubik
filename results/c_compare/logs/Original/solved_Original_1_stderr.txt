@@ -1,0 +1,6 @@
+permutation BFS: visited=5040 maximum=7 solved=0
+orientation BFS: visited=729 maximum=6 solved=0
+root lower bound=0
+limit=0 expanded=0 generated=0 found
+total expanded=0 generated=0 cpu_seconds=0.000000
+solution_length=0

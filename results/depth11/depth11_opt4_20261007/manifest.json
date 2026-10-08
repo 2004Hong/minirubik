@@ -1,0 +1,11 @@
+{
+    "model":  "RV32_ISS",
+    "solver":  "C:\\Users\\洪毓衡\\OneDrive - 長庚大學\\桌面\\CA\\solver_rv32i\\solver_rv32i_opt4.s",
+    "solver_sha256":  "44E05ED323DBBB7D37F390AE8007D7D6119E08A584F811B5A1820C1F2196A06B",
+    "inputs_sha256":  "35FBC8415CF0A5084DDEEE6DAD7F7CBA6028593DAA2B12E18C98A4089B67F065",
+    "ripes":  "C:\\Ripes\\Ripes.exe",
+    "ripes_sha256":  "BD2DDEA8CD6FCF6902CDA7366FE99AB6DD0C7FDBBC7EFCFDB89EDE20ACC67F0F",
+    "start_index":  1,
+    "count":  2644,
+    "instruction_limit":  50000000
+}

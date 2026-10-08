@@ -1,0 +1,19 @@
+Version=Original
+Input=21345671111111
+Run=1
+STDOUT:
+R B' D2 R' B R' B' R D2 R B
+
+STDERR:
+permutation BFS: visited=5040 maximum=7 solved=0
+orientation BFS: visited=729 maximum=6 solved=0
+root lower bound=7
+limit=7 expanded=129 generated=777 exhausted
+limit=8 expanded=881 generated=5289 exhausted
+limit=9 expanded=4790 generated=28743 exhausted
+limit=10 expanded=26431 generated=158589 exhausted
+limit=11 expanded=6767 generated=40563 found
+total expanded=38998 generated=233961 cpu_seconds=0.014000
+solution_length=11
+
+ExitCode=0
